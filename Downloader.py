@@ -94,7 +94,7 @@ class Downloader:
                'DNT': '1',
                'Connection': 'keep-alive',
                'Upgrade-Insecure-Requests': '1',
-               'Range': 'byte=0-1024'
+               'Range': 'bytes=0-0'
                }
 
     class DownloadThreadInfo:
@@ -158,13 +158,16 @@ class Downloader:
         # endPoint'}
 
         if os.path.exists(download_thread_info.content_file_name):
-            print("temp file exists...")
+            log_current_datetime(f"Thread:{download_thread_info.id} temp file exists")
             currentFileSize = os.stat(download_thread_info.content_file_name).st_size
 
             if currentFileSize > 0:  # Interrupted Multi threaded download; start from byte; altered to currentFileSize.
                 download_thread_info.fromByte = currentFileSize
-                print(f"temp file will resume... at bytes={currentFileSize}-{download_thread_info.toByte}")
                 self.headers.update({'Range': f'bytes={currentFileSize}-{download_thread_info.toByte}'})
+                str_from = format_bytes(currentFileSize)
+                str_to = format_bytes(download_thread_info.toByte)
+                message = f"temp file will resume...at bytes={str_from}-{str_to}"
+                log_current_datetime(message)
 
             if currentFileSize == download_thread_info.toByte:
                 download_thread_info.on_change_thread_status(self.DownloadThreadInfo.
@@ -178,33 +181,32 @@ class Downloader:
             # region send a request to download file...
             with requests.request('GET', download_thread_info.url, headers=self.headers) as site:
 
-                isMultiThreadingDownloadAllowed = (site.status_code == 206 and self.downloadCounter >= 0)
-
-                isSingleThreadedDownloadAllowed = (site.status_code == 200 and self.downloadCounter == 0)
-
-                isThreadAllowedToDownload = isMultiThreadingDownloadAllowed or isSingleThreadedDownloadAllowed
+                isThreadAllowedToDownload = (site.status_code == 206 or site.status_code == 200)
 
                 if isThreadAllowedToDownload:
+                    if currentFileSize > 0 and site.status_code == 206:             # Resuming Thread
 
-                    # region initialize Download Byte Range; for Interrupted, and new thread.
-
-                    if self.downloadCounter == 0 and site.status_code == 200:  # Allowed for, Single threaded download.
-
-                        download_thread_info.toByte = download_thread_info.maxByte
-
-                        if currentFileSize > 0:  # Interrupted Single thread, end to bytes; altered to origin.
-                            log_current_datetime(f"""
+                        log_current_datetime(f"""
                             Thread:{download_thread_info.id}, temp file will resume...
                             at bytes={format_bytes(currentFileSize)}-{format_bytes(download_thread_info.toByte)}
-                            """)
+                        """)
 
-                            self.headers.update({'Range': f'bytes={currentFileSize}-{download_thread_info.toByte}'})
-                            download_thread_info.on_change_thread_status(self.DownloadThreadInfo.
-                                                                         DownloadThreadStatus.RESUMING)
+                        self.headers.update({'Range': f'bytes={currentFileSize}-{download_thread_info.toByte}'})
 
-                        else:  # New Single thread, start from byte; altered to origin.
-                            log_current_datetime(f"Thread:{download_thread_info.id}, temp file will be created...")
-                            download_thread_info.fromByte = 0
+                        download_thread_info.on_change_thread_status(self.DownloadThreadInfo.
+                                                                     DownloadThreadStatus.RESUMING)
+
+                    elif self.downloadCounter >= 0 and site.status_code == 206:     # Multi-Threaded
+
+                        log_current_datetime(f"Thread:{download_thread_info.id}, temp file will be created...")
+
+                    elif self.downloadCounter == 0 and site.status_code == 200:     # Single-Threaded
+                        # New Single thread, start from byte; altered to origin.
+                        log_current_datetime(f"Thread:{download_thread_info.id}, temp file will be created...")
+                        download_thread_info.fromByte = 0
+                        download_thread_info.toByte = download_thread_info.maxByte
+                        self.headers.update(
+                            {'Range': f'bytes={download_thread_info.fromByte}-{download_thread_info.toByte}'})
 
                     fromByte = download_thread_info.fromByte
                     toByte = download_thread_info.toByte
@@ -216,7 +218,7 @@ class Downloader:
                     self.headers.update({'Range': f'bytes={fromByte}-{toByte}'})
                     self.downloadCounter += 1
 
-                    message = f"Thread:{download_thread_info.id}, is allowed to download...status {site.status_code}"
+                    message = f"Thread:{download_thread_info.id}, is allowed to download"
                     log_current_datetime(message)
 
                     total = toByte - fromByte
@@ -228,7 +230,7 @@ class Downloader:
                     try:
                         download_thread_info.on_change_thread_status(
                             self.DownloadThreadInfo.DownloadThreadStatus.PROCESSING_TASK)
-                        with open(download_thread_info.content_file_name, "wb") as f:
+                        with open(download_thread_info.content_file_name, "a+b") as f:
                             const_text = f'Thread:{download_thread_info.id} Downloading... {format_bytes(total)} on '
                             try:
                                 chunk_size = 8
@@ -238,7 +240,7 @@ class Downloader:
 
                                     # region ux design suite for logging downloading progress...
                                     percentage = round(float(chunkCount) * (100.0 / total), 9)
-                                    percentage_const = f"{chunkCount} @ {percentage}"
+                                    percentage_const = f"{format_bytes(chunkCount)} @ {percentage}"
                                     dynamic_text = "{}%\r".format(percentage_const)
                                     print(const_text + dynamic_text, end="")
                                     # endregion
@@ -261,9 +263,8 @@ class Downloader:
                 else:
                     status = self.DownloadThreadInfo.DownloadThreadStatus.NOT_ALLOWED_TO_PRECESS_TASK
                     download_thread_info.on_change_thread_status(status)
-                    message = f"Thread:{download_thread_info.id} is not allowed to download! status {site.status_code}"
+                    message = f"Thread:{download_thread_info.id} is not allowed to download!"
                     log_current_datetime(message)
-
             #  endregion
 
         # region log elapsed time for threads; that are allowed to download
@@ -298,15 +299,19 @@ class Downloader:
         log_code_region("start-of get_content_length")
         start_query_time = time.time()
 
-        with urllib.request.urlopen(url) as meta:
-            content_length = int(dict(meta.getheaders())["Content-Length"])
-            log_current_datetime(f"Content-Length:{format_bytes(content_length)}")
+        try:
+            with urllib.request.urlopen(url) as meta:
+                content_length = int(dict(meta.getheaders())["Content-Length"])
+                log_current_datetime(f"Content-Length:{format_bytes(content_length)}")
+        except urllib.error.HTTPError:
+            content_length = 0
 
         log_current_datetime(log_elapsed_time(start_query_time, "Querying", allow_display=False))
         log_code_region("end-of get_content_length")
+
         return content_length
 
-    def get_download_threads(self, url, thread_count=2):
+    def get_download_threads(self, url, thread_count=16):
         log_code_region("start-of get_download_threads")
         log_current_datetime(f"function invoked, using param:url={url}  thread_count={thread_count}")
         start_time = time.time()
@@ -315,18 +320,29 @@ class Downloader:
         content_file_name, content_mime = self.get_content_file_name_and_type(url)
         content_length = self.get_content_length(url)
 
+        eachThreadMustDownloadContentLength = int(content_length / thread_count)
+        log_current_datetime(f'Range: bytes=0-{format_bytes(eachThreadMustDownloadContentLength)}')
+        self.headers.update({'Range': f'bytes=0-{eachThreadMustDownloadContentLength}'})
+
         with requests.request('GET', url, headers=self.headers) as site:
+            isMultiThreadingDownloadAllowed = (site.status_code == 206 and thread_count > 1)
+            isSingleThreadingDownloadAllowed = site.status_code == 200
 
-            isMultiThreadingDownloadAllowed = (site.status_code == 206 and self.downloadCounter >= 0)
+            if not isMultiThreadingDownloadAllowed and not isSingleThreadingDownloadAllowed:
+                raise AssertionError(f"Server Status not supported {site.status_code}")  # 416 Range Not Satisfiable
 
-            thread_count = thread_count if isMultiThreadingDownloadAllowed else 1
+        message = "MultiThreading Allowed!" if isMultiThreadingDownloadAllowed else "Single Threading Allowed!"
+        log_current_datetime(message)
 
+        if isSingleThreadingDownloadAllowed:
+            eachThreadMustDownloadContentLength = content_length
+            self.headers.update({'Range': f'bytes=0-{eachThreadMustDownloadContentLength}'})
+
+        thread_count = thread_count if isMultiThreadingDownloadAllowed else 1
         downloadThreadsInfo = []
 
         try:
-            eachThreadMustDownloadContentLength = content_length / thread_count
-
-            if isMultiThreadingDownloadAllowed and thread_count > 1:
+            if isMultiThreadingDownloadAllowed:
                 for current_thread_id in range(thread_count):
                     downloadThread = self.DownloadThreadInfo(url, current_thread_id, content_file_name, content_mime,
                                                              content_length,
@@ -344,7 +360,7 @@ class Downloader:
                     downloadThread.on_change_thread_status(self.DownloadThreadInfo.DownloadThreadStatus.INITIALIZING)
                     downloadThreadsInfo.append(downloadThread)
                     threads.append(threading.Thread(target=self.download, args=[downloadThread]))
-            else:
+            elif isSingleThreadingDownloadAllowed:
                 downloadThread = self.DownloadThreadInfo(url, thread_count - 1, content_file_name, content_mime,
                                                          content_length, eachThreadMustDownloadContentLength)
                 downloadThread.fromByte = 0
@@ -353,7 +369,6 @@ class Downloader:
                 downloadThread.on_change_thread_status(self.DownloadThreadInfo.DownloadThreadStatus.INITIALIZING)
                 downloadThreadsInfo.append(downloadThread)
                 threads.append(threading.Thread(target=self.download, args=[downloadThread]))
-
         except ZeroDivisionError:
             print("Download partition thread failed!")
 
@@ -365,9 +380,11 @@ class Downloader:
 # region sample url links, for testing...
 
 # link = "https://releases.ubuntu.com/18.04/ubuntu-18.04.4-desktop-amd64.iso"
+# link = "https://files03.tchspt.com/temp/MicrosoftEdgeStableSetup.msi"
+link = "http://mirrors.evowise.com/linuxmint/debian/lmde-4-cinnamon-32bit.iso"
 
 # region sample url link; to 10MB MP4, test file
-link = "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_1280_10MG.mp4"
+# link = "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_1280_10MG.mp4"
 
 
 # endregion
@@ -412,7 +429,7 @@ def stitch_temp_files(download_threads_info):
 
     is_complete_downloaded_file_stitched = True
 
-    with open(complete_downloaded_file_name, "wb") as complete_downloaded_file:
+    with open(complete_downloaded_file_name, "a+b") as complete_downloaded_file:
         chunk_size = 1
         for download_thread_info in download_threads_info:
             if not download_thread_info.did_download:
