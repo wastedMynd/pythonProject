@@ -44,6 +44,17 @@ def log_code_region(region, allow_display=True):
     return log_code_region_
 
 
+def format_bytes(size):
+    power = 2 ** 10  # 2**10 = 1024
+    n = 0
+    power_labels = {0: '', 1: 'K', 2: 'M', 3: 'G', 4: 'T', 5: 'P'}
+    while size > power:
+        size /= power
+        n += 1
+
+    return f" {round(size, 2)}{power_labels[n]}B "
+
+
 # endregion
 
 class Downloader:
@@ -113,7 +124,7 @@ class Downloader:
             self.thread_status_progression = [self.thread_status]
             self.did_download = False
             self.did_stitch = False
-            log_elapsed_time(start_time, f"{self.__str__()}, Created! ")
+            log_current_datetime(log_elapsed_time(start_time, f"Thread:{thread_id}, creation", allow_display=False))
             log_code_region("end-of DownloadThreadInfo __init__")
 
         def __str__(self):
@@ -121,14 +132,15 @@ class Downloader:
             DownloadThreadInfo:\n\t\t\t
             Thread:{self.id}\n\t\t\t
             Url:{self.url}\n\t\t\t
+            Official Filename:{self.official_name}\n\t\t\t
             Temp Filename:{self.content_file_name}\n\t\t\t
-            Start Byte(s):{self.fromByte}\n\t\t\t
-            End Byte(s):{self.toByte}\n\t\t\t
-            Thread Will Attempt to download Bytes:{self.thread_byte_contract}\n\t\t\t
-            Download Content Bytes:{self.maxByte}\n\t\t\t
-            Did Thread Download:{self.did_download if "Yes" else "No"}\n\t\t\t
-            Did Thread Stitch:{self.did_stitch if "Yes" else "No"}\n\t\t\t
-            Thread Status:{self.thread_status}\n
+            Download Content Bytes:{format_bytes(self.maxByte)}\n\t\t\t
+            Start Byte(s):{format_bytes(self.fromByte)}\n\t\t\t
+            End Byte(s):{format_bytes(self.toByte)}\n\t\t\t
+            Thread Will Attempt to download Bytes:{format_bytes(self.thread_byte_contract)}\n\t\t\t
+            Did Thread Download:{"Yes" if self.did_download else "No"}\n\t\t\t
+            Did Thread Stitch:{"Yes" if self.did_stitch else "No"}\n\t\t\t
+            Thread Status:{self.thread_status.name}\n
             """
 
         def on_change_thread_status(self, to_thread_status):
@@ -139,7 +151,6 @@ class Downloader:
 
     def download(self, download_thread_info):
         log_code_region("start-of download")
-        log_current_datetime(f"function invoked, using download_thread_info={download_thread_info}")
         startTime = time.time()
         currentFileSize = 0
 
@@ -182,23 +193,31 @@ class Downloader:
                         download_thread_info.toByte = download_thread_info.maxByte
 
                         if currentFileSize > 0:  # Interrupted Single thread, end to bytes; altered to origin.
-                            print(f"temp file will resume... at bytes={currentFileSize}-{download_thread_info.toByte}")
+                            log_current_datetime(f"""
+                            Thread:{download_thread_info.id}, temp file will resume...
+                            at bytes={format_bytes(currentFileSize)}-{format_bytes(download_thread_info.toByte)}
+                            """)
+
                             self.headers.update({'Range': f'bytes={currentFileSize}-{download_thread_info.toByte}'})
                             download_thread_info.on_change_thread_status(self.DownloadThreadInfo.
                                                                          DownloadThreadStatus.RESUMING)
 
                         else:  # New Single thread, start from byte; altered to origin.
-                            print("temp file will be created...")
+                            log_current_datetime(f"Thread:{download_thread_info.id}, temp file will be created...")
                             download_thread_info.fromByte = 0
 
                     fromByte = download_thread_info.fromByte
                     toByte = download_thread_info.toByte
 
-                    print(f"temp file will start at... bytes={fromByte}-{toByte}")
+                    message_byte_range = f"{format_bytes(fromByte)}-{format_bytes(toByte)}"
+                    message = f"Thread:{download_thread_info.id}, temp file will start at... bytes={message_byte_range}"
+                    log_current_datetime(message)
+
                     self.headers.update({'Range': f'bytes={fromByte}-{toByte}'})
                     self.downloadCounter += 1
 
-                    print(f"Thread:{download_thread_info.id} is allowed to download... status {site.status_code}")
+                    message = f"Thread:{download_thread_info.id}, is allowed to download...status {site.status_code}"
+                    log_current_datetime(message)
 
                     total = toByte - fromByte
                     chunkCount = 0
@@ -210,7 +229,7 @@ class Downloader:
                         download_thread_info.on_change_thread_status(
                             self.DownloadThreadInfo.DownloadThreadStatus.PROCESSING_TASK)
                         with open(download_thread_info.content_file_name, "wb") as f:
-                            const_text = f'Thread:{download_thread_info.id} Downloading... {total} on '
+                            const_text = f'Thread:{download_thread_info.id} Downloading... {format_bytes(total)} on '
                             try:
                                 chunk_size = 8
                                 for chunk in site.iter_content(chunk_size):
@@ -230,29 +249,33 @@ class Downloader:
 
                             except IOError:
                                 download_thread_info.did_download = False
-                                download_thread_info.on_change_thread_status(self.DownloadThreadInfo.
-                                                                             DownloadThreadStatus.INTERRUPTED)
+                                status = self.DownloadThreadInfo.DownloadThreadStatus.INTERRUPTED
+                                download_thread_info.on_change_thread_status(status)
+
                     except IOError:
-                        download_thread_info.on_change_thread_status(self.DownloadThreadInfo.
-                                                                     DownloadThreadStatus.INTERRUPTED)
+                        download_thread_info.did_download = False
+                        status = self.DownloadThreadInfo.DownloadThreadStatus.INTERRUPTED
+                        download_thread_info.on_change_thread_status(status)
+
                     # endregion
                 else:
-                    download_thread_info.on_change_thread_status(self.DownloadThreadInfo.
-                                                                 DownloadThreadStatus.NOT_ALLOWED_TO_PRECESS_TASK)
-                    print(f"Thread:{download_thread_info.id} is not allowed to download! status {site.status_code}")
+                    status = self.DownloadThreadInfo.DownloadThreadStatus.NOT_ALLOWED_TO_PRECESS_TASK
+                    download_thread_info.on_change_thread_status(status)
+                    message = f"Thread:{download_thread_info.id} is not allowed to download! status {site.status_code}"
+                    log_current_datetime(message)
 
             #  endregion
 
         # region log elapsed time for threads; that are allowed to download
         if isThreadAllowedToDownload:
-            log_elapsed_time(startTime, f"Thread:{download_thread_info.id}")
+            message = f"Thread:{download_thread_info.id}"
+            log_current_datetime(log_elapsed_time(startTime, message, allow_display=False))
         # endregion
         log_code_region("end-of download")
         pass
 
     def get_content_file_name_and_type(self, url):
         log_code_region("start-of get_content_file_name_and_type")
-        log_current_datetime(f"function invoked, using param:url={url}")
         startTime = time.time()
 
         tempUrlSegs = url.split("/")
@@ -261,32 +284,31 @@ class Downloader:
         content_file_name = tempUrlSegs_[0]
         for i in range(1, len(tempUrlSegs_) - 1):
             content_file_name = f"{content_file_name}_{tempUrlSegs_[i]}"
-        print(f"Content-File-Name:{content_file_name}")
+        log_current_datetime(f"Content-File-Name:{content_file_name}")
 
         content_type = tempUrlSegs[len(tempUrlSegs) - 1].split(".")
         content_type = content_type[len(content_type) - 1]
-        print(f"Content-Type:{content_type}")
+        log_current_datetime(f"Content-Type:{content_type}")
 
-        log_elapsed_time(startTime, "Content FileName, and Type Query")
+        log_current_datetime(log_elapsed_time(startTime, "Content FileName, and Type Query", allow_display=False))
         log_code_region("end-of get_content_file_name_and_type")
         return content_file_name, content_type
 
     def get_content_length(self, url):
         log_code_region("start-of get_content_length")
-        log_current_datetime(f"function invoked, using param:url={url}")
         start_query_time = time.time()
 
         with urllib.request.urlopen(url) as meta:
             content_length = int(dict(meta.getheaders())["Content-Length"])
-            print(f"Content-Length:{content_length}")
+            log_current_datetime(f"Content-Length:{format_bytes(content_length)}")
 
-        log_elapsed_time(start_query_time, "Querying")
+        log_current_datetime(log_elapsed_time(start_query_time, "Querying", allow_display=False))
         log_code_region("end-of get_content_length")
         return content_length
 
     def get_download_threads(self, url, thread_count=2):
         log_code_region("start-of get_download_threads")
-        log_current_datetime(f"function invoked, using param:url={url},thread_count={thread_count}")
+        log_current_datetime(f"function invoked, using param:url={url}  thread_count={thread_count}")
         start_time = time.time()
         threads = []
 
@@ -335,7 +357,7 @@ class Downloader:
         except ZeroDivisionError:
             print("Download partition thread failed!")
 
-        log_elapsed_time(start_time, "get_download_threads")
+        log_current_datetime(log_elapsed_time(start_time, "get_download_threads", allow_display=False))
         log_code_region("end-of get_download_threads")
         return threads, downloadThreadsInfo
 
@@ -370,11 +392,13 @@ def start_download(download_from_url_links):
         status_progression = ""
         for status in download_thread_info.thread_status_progression:
             status_progression = status.name if status_progression == '' else f'{status_progression}, {status.name}'
-        print(f"Thread:{download_thread_info.id}, progression history {status_progression}")
+        log_current_datetime(f"Thread:{download_thread_info.id}, progression history {status_progression}")
 
-    log_elapsed_time(startDownloadTime, "Download")
+    log_current_datetime(log_elapsed_time(startDownloadTime, "Download", allow_display=False))
 
-    stitch_temp_files(download_threads_info)
+    stitching_thread = threading.Thread(target=stitch_temp_files, args=[download_threads_info])
+    stitching_thread.start()
+    stitching_thread.join()
 
     log_code_region("end-of start_download")
     pass
@@ -382,7 +406,6 @@ def start_download(download_from_url_links):
 
 def stitch_temp_files(download_threads_info):
     log_code_region("start-of stitch_temp_files")
-    log_current_datetime(f"function invoked, using param:download_threads_info={download_threads_info}")
     start_time = time.time()
 
     complete_downloaded_file_name = download_threads_info[0].official_name
@@ -412,13 +435,9 @@ def stitch_temp_files(download_threads_info):
         else:
             os.remove(download_thread_info.content_file_name)
 
-    if is_complete_downloaded_file_stitched:
-        log_current_datetime(
-            log_elapsed_time(start_time, "Completed File Stitching, File Now Available", allow_display=False))
-    else:
-        log_current_datetime(
-            log_elapsed_time(start_time, "File Stitching, Failed! File is Not Usable", allow_display=False))
-
+    message = "Completed File Stitching, File Now Available" if is_complete_downloaded_file_stitched \
+        else "File Stitching, Failed! File is Not Usable"
+    log_current_datetime(log_elapsed_time(start_time, message, allow_display=False))
     log_code_region("end-of stitch_temp_files")
     pass
 
@@ -431,6 +450,6 @@ def run_download(download_from_url_link):
 try:
     run_download(link)
 except urllib.error.URLError:
-    print("No Internet Connection!!")
+    log_current_datetime("No Internet Connection!!")
 
 # endregion
