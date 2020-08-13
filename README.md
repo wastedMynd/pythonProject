@@ -1,7 +1,7 @@
 # pythonProject
 Sample Python scripts for utility operation(s).
 
-##Include but not limited to:
+## Include but not limited to:
 
   - Downloader.py; which Downloads using Multi-Threads, threads segments range from 1 up-to 64.
     It has Download abilities ranging from:
