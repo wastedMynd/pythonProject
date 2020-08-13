@@ -1,7 +1,7 @@
 # pythonProject
 Sample Python scripts for utility operation(s).
 
-Include but not limited to:
+##Include but not limited to:
 
   - Downloader.py; which Downloads using Multi-Threads, threads segments range from 1 up-to 64.
     It has Download abilities ranging from:
@@ -17,6 +17,6 @@ Include but not limited to:
       - Latest draw result(s) and its previous draw results.
     - turtleDraw.py: for learning the turtle package.
     
- 
+ ##
  Disclaimer, I created this repo; just for fun, and to showcase Python usage.
  I'd like you to contribute to this repo. lets add more useful scripts.
