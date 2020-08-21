@@ -1,19 +1,10 @@
 import time
 import datetime
+import logging
+import os
 
 
-def log_elapsed_time(start_time, message, allow_display=True):
-    elapsed_time = time.time() - start_time
-    time_format = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
-    log_elapsed_time_ = f"{message}, took {time_format} second(s); to complete.\n"
-
-    if allow_display:
-        print("{}\r", end=f"{log_elapsed_time_}")
-
-    return log_elapsed_time_
-
-
-def log_current_datetime(message, allow_display=True):
+def current_datetime(message, allow_display=True):
     log_current_datetime_ = f'{datetime.datetime.now()}, {message}\n'
 
     if allow_display:
@@ -22,10 +13,28 @@ def log_current_datetime(message, allow_display=True):
     return log_current_datetime_
 
 
-def log_code_region(region, allow_display=True):
-    log_code_region_ = "#####" * 5 + f" {region} " + "#####" * 5 + "\n"
+def elapsed_time(start_time, message):
+    time_format = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
+    log_elapsed_time_ = f"{message}, took {time_format} second(s); to complete."
+    return log_elapsed_time_
 
-    if allow_display:
-        print("{}\r", end=f"{log_code_region_}")
 
-    return log_code_region_
+class Logging(object):
+    def __init__(self, your_function):
+        self.your_function = your_function
+
+        this_dir = os.path.abspath("log.py")
+        parent_dir =os.path.dirname(this_dir)
+
+        log_file = 'app.log'
+
+        log_path = os.path.join(parent_dir, log_file)
+        log_format = '%(asctime)s - %(message)s'
+        logging.basicConfig(filename=log_path, filemode='w', format=log_format, level=logging.DEBUG)
+
+    def __call__(self, *args, **kwargs):
+        logging.debug(f"method: {self.your_function.__name__}, was invoked.")
+        function = self.your_function(*args, **kwargs) if not kwargs == "" else self.your_function(*args)
+        logging.debug(elapsed_time(time.time(), message=self.your_function.__name__))
+        logging.debug(f"method: {self.your_function.__name__}, finished.\n")
+        return function

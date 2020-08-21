@@ -3,6 +3,7 @@ from functools import partial
 from tkinter import *
 from Downloader.Utils.human_readable import is_url_link_valid
 from Downloader.Utils.log import Logging
+import threading
 
 
 @Logging
@@ -32,11 +33,17 @@ def on_click_add_url_listener(add_url_to_list):
         print(f"Address or URL link, to Download : {url_to_download}")
 
         # todo add functionality
-        if is_url_link_valid(url_to_download):
+        def validate():
+            if not is_url_link_valid(url_to_download):
+                return
+
+            dialog_window.destroy()
+
             print("download started...")
             add_url_to_list(url_to_download)
 
-        dialog_window.destroy()
+        thread = threading.Thread(target=validate)
+        thread.start()
 
         pass
 

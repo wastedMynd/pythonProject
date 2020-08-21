@@ -2,7 +2,7 @@ import os
 import random
 import threading
 import requests
-from Downloader.FileDownload.download_thread_info import DownloadThreadInfo
+from Downloader.Controller.download_thread_info import DownloadThreadInfo
 from Downloader.Utils import log
 from Downloader.Utils import file
 from Downloader.Utils import human_readable as readable
@@ -49,7 +49,7 @@ class Downloader:
                'Range': 'bytes=0-0'
                }
 
-    def download(self, download_thread_info):
+    def download(self, download_thread_info, update_download_progress=None):
         currentFileSize = 0
 
         # region check if Server can Resume Download; by Updating the Headers {'Range': 'byte= interruptPoint -
@@ -144,10 +144,20 @@ class Downloader:
 
                                     # region ux design suite for logging downloading progress...
                                     percentage = round(float(chunkCount) * (100.0 / total))
+
                                     percentage_const = f"{percentage}%"
                                     dynamic_text = "{}\r"
                                     print(dynamic_text, end=f"{const_text}{percentage_const}")
-                                    # endregion
+
+                                    def update(percentage_, id_):
+                                        try:
+                                            update_download_progress(percentage_, id_)
+                                        except RuntimeError:
+                                            pass
+
+                                    thread = threading.Thread(target=update, args=[percentage, download_thread_info.id])
+                                    thread.start()
+                                # endregion
 
                                 download_thread_info.did_download = True
                                 download_thread_info.on_change_thread_status(
@@ -173,7 +183,7 @@ class Downloader:
             #  endregion
         pass
 
-    def get_download_threads(self, url, thread_count=16):
+    def get_download_threads(self, url, thread_count=16, update_download_progress=None):
         threads = []
 
         official_file_name, content_file_name, content_mime = readable.get_content_file_name_and_type(url)
@@ -219,7 +229,8 @@ class Downloader:
 
                     downloadThread.on_change_thread_status(DownloadThreadInfo.DownloadThreadStatus.INITIALIZING)
                     downloadThreadsInfo.append(downloadThread)
-                    threads.append(threading.Thread(target=self.download, args=[downloadThread]))
+                    threads.append(
+                        threading.Thread(target=self.download, args=[downloadThread, update_download_progress]))
 
             elif isSingleThreadingDownloadAllowed:
                 downloadThread = DownloadThreadInfo(url, thread_count - 1, content_file_name, content_mime,
