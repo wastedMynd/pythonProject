@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div>Internet Download Manager</div>
+<div>
+    <textarea id="url_to_downloaad">Enter Url</textarea>
+    <button onclick="download">download</button>
+</div>
+<script type="js">
+
+    func download(){
+
+    spawn('python', ['main.py']);
+
+    }
+
+</script>
+</body>
+</html>
