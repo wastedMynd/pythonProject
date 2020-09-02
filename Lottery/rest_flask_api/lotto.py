@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from Lottery.rest_flask_api.lottery_games import LotteryGames
-from Lottery.rest_flask_api.lotto_scapper import getLatestDrawResultInfo
+from Lottery.rest_flask_api.lotto_scrapper import getLatestDrawResultInfo
 
 
 class Lotto(Resource):
