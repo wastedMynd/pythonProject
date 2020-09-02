@@ -51,7 +51,7 @@ def getLatestDrawResultInfo():
         # terminate the browser window
         driver.quit()
 
-    data = {"draw_result_title": page_title,
+    return {"draw_result_title": page_title,
             "draw_result_id": draw_id,
             "draw_result_date": draw_date,
             "draw_result_numbers": {
@@ -61,8 +61,6 @@ def getLatestDrawResultInfo():
             "draw_result_division_info": result_division_list,
             "draw_result_rollover_info": draw_result_rollover_list
             }
-
-    return data
 
 
 def ___get_draw_id___(res_detail_view):
