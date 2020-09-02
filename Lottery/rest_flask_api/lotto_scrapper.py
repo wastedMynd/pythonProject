@@ -27,33 +27,14 @@ def getLatestDrawResultInfo():
     resDetailView = driver.find_element_by_class_name("resDetailView")
 
     # region draw id scrapping
-    # region assert resDetailView.title, equals "LOTTO RESULTS FOR DRAW ID \d+"
-    resDetailView_title_match = \
-        re.match("LOTTO RESULTS FOR DRAW ID (\\d+)", resDetailView.find_element_by_class_name("title").text)
-    assert resDetailView_title_match is not None
-
-    # get draw id from resDetailView_title_match group 1
-    draw_id = int(resDetailView_title_match.group(1))
-    # endregion
+    draw_id = ___get_draw_id___(resDetailView)
     # endregion
 
     # region draw results; balls, bonus ball, and date scrapping
     # region innerHeaderBlock holds; draw_result_balls, draw_result_bonus_ball, and draw date
     innerHeaderBlock = resDetailView.find_element_by_class_name("innerHeaderBlock")
-    resultBalls = innerHeaderBlock.find_element_by_class_name("resultBalls")
-    assert resultBalls.text is not None
-
-    result_ball_set = str(resultBalls.text).replace("\n", " ")
-    draw_result_balls = result_ball_set.split(" + ")[0].strip()
-    draw_result_bonus_ball = result_ball_set.split(" + ")[1].strip()
-    # endregion
-
-    # region draw date holder, is dateWrap = "DRAW DATE: 2020-08-29"
-    dateWrap = innerHeaderBlock.find_element_by_class_name("dateWrap")
-    # assert dateWrap equals regex pattern "DRAW DATE: \d{4}-\d{2}-{2}"
-    dateWrapMatch = re.match("DRAW DATE: (\\d{4}-\\d{2}-\\d{2})", dateWrap.text)
-    assert dateWrapMatch is not None
-    draw_date = dateWrapMatch.group(1)
+    draw_result_balls, draw_result_bonus_ball = ___get_draw_result_balls_and_bonus___(innerHeaderBlock)
+    draw_date = ___get_draw_date___(innerHeaderBlock)
     # endregion
     # endregion
 
@@ -125,3 +106,34 @@ def getLatestDrawResultInfo():
             }
 
     return data
+
+
+def ___get_draw_id___(res_detail_view):
+    resDetailView_title_match = \
+        re.match("LOTTO RESULTS FOR DRAW ID (\\d+)", res_detail_view.find_element_by_class_name("title").text)
+    assert resDetailView_title_match is not None
+
+    # get draw id from resDetailView_title_match group 1
+    draw_id = int(resDetailView_title_match.group(1))
+
+    return draw_id
+
+
+def ___get_draw_result_balls_and_bonus___(inner_header_block):
+    resultBalls = inner_header_block.find_element_by_class_name("resultBalls")
+    assert resultBalls.text is not None
+
+    result_ball_set = str(resultBalls.text).replace("\n", " ")
+    draw_result_balls = result_ball_set.split(" + ")[0].strip()
+    draw_result_bonus_ball = result_ball_set.split(" + ")[1].strip()
+
+    return draw_result_balls, draw_result_bonus_ball
+
+
+def ___get_draw_date___(inner_header_block):
+    dateWrap = inner_header_block.find_element_by_class_name("dateWrap")
+    # assert dateWrap equals regex pattern "DRAW DATE: \d{4}-\d{2}-{2}"
+    dateWrapMatch = re.match("DRAW DATE: (\\d{4}-\\d{2}-\\d{2})", dateWrap.text)
+    assert dateWrapMatch is not None
+    draw_date = dateWrapMatch.group(1)
+    return draw_date
