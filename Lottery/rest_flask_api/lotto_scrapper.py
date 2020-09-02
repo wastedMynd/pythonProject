@@ -23,7 +23,6 @@ def getLatestDrawResultInfo():
     page_title = driver.title
     assert page_title == "Ithuba National Lottery | Lotto Result"
 
-    # draw info holder [resDetailView]
     resDetailView = driver.find_element_by_class_name("resDetailView")
 
     # region draw id scrapping
@@ -40,54 +39,12 @@ def getLatestDrawResultInfo():
 
     # region draw division scrapping
     gameTable2 = resDetailView.find_element_by_class_name("gameTable2")
-
-    # region gameTable2 holds; column headers: divisions, winners and winnings
-    tableHead = gameTable2.find_element_by_class_name("tableHead")
-    tableRow = tableHead.find_element_by_class_name("tableRow")
-
-    division_column_ = tableRow.find_element_by_class_name("col1")
-    winners_column_ = tableRow.find_element_by_class_name("col2")
-    winnings_column_ = tableRow.find_element_by_class_name("col3")
-
-    division_column = str(division_column_.text).lower()
-    winners_column = str(winners_column_.text).lower()
-    winnings_column = str(winnings_column_.text).lower()
+    result_division_list = ___get_result_division_list___(gameTable2)
     # endregion
 
-    # region tableBody holds; data for column headers: divisions, winners and winnings
-    tableBody = gameTable2.find_element_by_class_name("tableBody")
-    table_rows = tableBody.find_elements_by_class_name("tableRow")
-
-    def get_result_division(table_row_data):
-        division_data = table_row_data.find_element_by_class_name("col1")
-        winners_data = table_row_data.find_element_by_class_name("col2")
-        winnings_data = table_row_data.find_element_by_class_name("col3")
-
-        division = division_data.text.replace("\n", " ")
-        winners = winners_data.text.replace("\n", " ")
-        winnings = winnings_data.text.replace("\n", " ")
-
-        data_dictionary = {division_column: division, winners_column: winners, winnings_column: winnings}
-        return data_dictionary
-
-    result_division_list = [get_result_division(table_row_data) for table_row_data in table_rows]
-    # endregion
-
-    # endregion
-
-    # region draw result rollover info
-
+    # region draw result rollover info scrapping
     resMoreView = driver.find_element_by_class_name("resMoreView")
-    tableBody = resMoreView.find_element_by_class_name("tableBody")
-    table_rows = tableBody.find_elements_by_class_name("tableRow")
-
-    def get_draw_result_rollover(table_row_data):
-        column = table_row_data.find_element_by_class_name("col1")
-        column = str(column.text).lower().strip().replace(" ", "_")
-        column_data = table_row_data.find_element_by_class_name("col2")
-        return {column: column_data.text}
-
-    draw_result_rollover_list = [get_draw_result_rollover(table_row_data) for table_row_data in table_rows]
+    draw_result_rollover_list = ___get_draw_result_rollover_list___(resMoreView)
     # endregion
 
     if not DEBUGGING:
@@ -137,3 +94,49 @@ def ___get_draw_date___(inner_header_block):
     assert dateWrapMatch is not None
     draw_date = dateWrapMatch.group(1)
     return draw_date
+
+
+def ___get_result_division_list___(game_table_2):
+    # region gameTable2 holds; column headers: divisions, winners and winnings
+    tableHead = game_table_2.find_element_by_class_name("tableHead")
+    tableRow = tableHead.find_element_by_class_name("tableRow")
+
+    division_column_ = tableRow.find_element_by_class_name("col1")
+    winners_column_ = tableRow.find_element_by_class_name("col2")
+    winnings_column_ = tableRow.find_element_by_class_name("col3")
+
+    division_column = str(division_column_.text).lower()
+    winners_column = str(winners_column_.text).lower()
+    winnings_column = str(winnings_column_.text).lower()
+    # endregion
+
+    # region tableBody holds; data for column headers: divisions, winners and winnings
+    tableBody = game_table_2.find_element_by_class_name("tableBody")
+    table_rows = tableBody.find_elements_by_class_name("tableRow")
+
+    def get_result_division(table_row_data):
+        division_data = table_row_data.find_element_by_class_name("col1")
+        winners_data = table_row_data.find_element_by_class_name("col2")
+        winnings_data = table_row_data.find_element_by_class_name("col3")
+
+        division = division_data.text.replace("\n", " ")
+        winners = winners_data.text.replace("\n", " ")
+        winnings = winnings_data.text.replace("\n", " ")
+
+        data_dictionary = {division_column: division, winners_column: winners, winnings_column: winnings}
+        return data_dictionary
+
+    return [get_result_division(table_row_data) for table_row_data in table_rows]
+
+
+def ___get_draw_result_rollover_list___(res_more_view):
+    tableBody = res_more_view.find_element_by_class_name("tableBody")
+    table_rows = tableBody.find_elements_by_class_name("tableRow")
+
+    def get_draw_result_rollover(table_row_data):
+        column = table_row_data.find_element_by_class_name("col1")
+        column = str(column.text).lower().strip().replace(" ", "_")
+        column_data = table_row_data.find_element_by_class_name("col2")
+        return {column: column_data.text}
+
+    return [get_draw_result_rollover(table_row_data) for table_row_data in table_rows]
