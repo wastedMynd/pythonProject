@@ -1,26 +1,18 @@
-from selenium import webdriver
+from Lottery.rest_flask_api.chrome_driver import web_driver_get
 import re
 
 DEBUGGING = False
 
 
 def getLatestDrawResultInfo():
-    # download chrome driver https://chromedriver.storage.googleapis.com/index.html?path=84.0.4147.30/
-    path_to_chromedriver = "/home/sizwe/PycharmProjects/pythonProject/Lottery/rest_flask_api/chromedriver"
-
-    # link webdriver to chromedriver
-    opts = webdriver.ChromeOptions()
-    opts.headless = not DEBUGGING
-    driver = webdriver.Chrome(path_to_chromedriver, options=opts)
-
     # latest lotto draw result.
     lotto_latest_draw_result_site = "https://www.nationallottery.co.za/results/lotto"
 
-    # get the page, to the latest lotto draw result.
-    driver.get(lotto_latest_draw_result_site)
+    # get the latest lotto draw result, page from ___driver_get___
+    driver = web_driver_get(lotto_latest_draw_result_site)
 
     # assert page's title; equals "Ithuba National Lottery | Lotto Result"
-    page_title = driver.title
+    page_title = ___get_page_title___(driver)
     assert page_title == "Ithuba National Lottery | Lotto Result"
 
     resDetailView = driver.find_element_by_class_name("resDetailView")
@@ -63,7 +55,11 @@ def getLatestDrawResultInfo():
             }
 
 
-def ___get_draw_id___(res_detail_view):
+def ___get_page_title___(driver) -> str:
+    return driver.title
+
+
+def ___get_draw_id___(res_detail_view) -> int:
     resDetailView_title_match = \
         re.match("LOTTO RESULTS FOR DRAW ID (\\d+)", res_detail_view.find_element_by_class_name("title").text)
     assert resDetailView_title_match is not None
@@ -74,7 +70,7 @@ def ___get_draw_id___(res_detail_view):
     return draw_id
 
 
-def ___get_draw_result_balls_and_bonus___(inner_header_block):
+def ___get_draw_result_balls_and_bonus___(inner_header_block) -> tuple:
     resultBalls = inner_header_block.find_element_by_class_name("resultBalls")
     assert resultBalls.text is not None
 
@@ -85,7 +81,7 @@ def ___get_draw_result_balls_and_bonus___(inner_header_block):
     return draw_result_balls, draw_result_bonus_ball
 
 
-def ___get_draw_date___(inner_header_block):
+def ___get_draw_date___(inner_header_block) -> str:
     dateWrap = inner_header_block.find_element_by_class_name("dateWrap")
     # assert dateWrap equals regex pattern "DRAW DATE: \d{4}-\d{2}-{2}"
     dateWrapMatch = re.match("DRAW DATE: (\\d{4}-\\d{2}-\\d{2})", dateWrap.text)
@@ -94,7 +90,7 @@ def ___get_draw_date___(inner_header_block):
     return draw_date
 
 
-def ___get_result_division_list___(game_table_2):
+def ___get_result_division_list___(game_table_2) -> list:
     # region gameTable2 holds; column headers: divisions, winners and winnings
     tableHead = game_table_2.find_element_by_class_name("tableHead")
     tableRow = tableHead.find_element_by_class_name("tableRow")
@@ -127,7 +123,7 @@ def ___get_result_division_list___(game_table_2):
     return [get_result_division(table_row_data) for table_row_data in table_rows]
 
 
-def ___get_draw_result_rollover_list___(res_more_view):
+def ___get_draw_result_rollover_list___(res_more_view) -> list:
     tableBody = res_more_view.find_element_by_class_name("tableBody")
     table_rows = tableBody.find_elements_by_class_name("tableRow")
 
