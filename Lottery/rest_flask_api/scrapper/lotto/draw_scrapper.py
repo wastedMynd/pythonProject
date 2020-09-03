@@ -1,15 +1,14 @@
-from Lottery.rest_flask_api.driver.chrome_driver import web_driver_get
+from Lottery.rest_flask_api.driver.chrome_driver import ChromeDriver
 import re
-
-DEBUGGING = False
 
 
 def get_draw():
     # latest lotto draw result.
     lotto_latest_draw_result_site = "https://www.nationallottery.co.za/results/lotto"
 
-    # get the latest lotto draw result, page from ___driver_get___
-    driver = web_driver_get(lotto_latest_draw_result_site)
+    chrome_driver = ChromeDriver()
+    driver = chrome_driver.___setup_web_driver___()
+    driver.get(lotto_latest_draw_result_site)
 
     # assert page's title; equals "Ithuba National Lottery | Lotto Result"
     page_title = ___get_page_title___(driver)
@@ -39,20 +38,21 @@ def get_draw():
     draw_result_rollover_list = ___get_draw_result_rollover_list___(resMoreView)
     # endregion
 
-    if not DEBUGGING:
+    if not chrome_driver.DEBUGGING:
         # terminate the browser window
         driver.quit()
 
-    return {"draw_result_title": page_title,
-            "draw_result_id": draw_id,
-            "draw_result_date": draw_date,
-            "draw_result_numbers": {
-                "balls": draw_result_balls,
-                "bonus_ball": draw_result_bonus_ball
-            },
-            "draw_result_division_info": result_division_list,
-            "draw_result_rollover_info": draw_result_rollover_list
-            }
+    return {
+        "draw_result_title": str(page_title),
+        "draw_id": int(draw_id),
+        "draw_date": str(draw_date),
+        "draw_winning_numbers": {
+            "numbers": list(draw_result_balls),
+            "bonus_number": int(draw_result_bonus_ball)
+        },
+        "draw_division_info": list(result_division_list),
+        "draw_rollover_info": list(draw_result_rollover_list)
+    }
 
 
 def ___get_page_title___(driver) -> str:
@@ -65,9 +65,7 @@ def ___get_draw_id___(res_detail_view) -> int:
     assert resDetailView_title_match is not None
 
     # get draw id from resDetailView_title_match group 1
-    draw_id = int(resDetailView_title_match.group(1))
-
-    return draw_id
+    return int(resDetailView_title_match.group(1))
 
 
 def ___get_draw_result_balls_and_bonus___(inner_header_block) -> tuple:
@@ -75,10 +73,14 @@ def ___get_draw_result_balls_and_bonus___(inner_header_block) -> tuple:
     assert resultBalls.text is not None
 
     result_ball_set = str(resultBalls.text).replace("\n", " ")
+
     draw_result_balls = result_ball_set.split(" + ")[0].strip()
+    draw_result_balls = [int(number) for number in draw_result_balls.split(" ")]
+    assert draw_result_balls is not None and len(draw_result_balls) > 0
+
     draw_result_bonus_ball = result_ball_set.split(" + ")[1].strip()
 
-    return draw_result_balls, draw_result_bonus_ball
+    return list(draw_result_balls), int(draw_result_bonus_ball)
 
 
 def ___get_draw_date___(inner_header_block) -> str:
