@@ -22,7 +22,7 @@ Sample Python scripts for utility operation(s).
             - API url reference '/powerball'
         - Powerball Plus
             - API url reference '/powerball_plus'
-    - API Provides the following; and referenced using the API url seen above suffix:
+    - API Provides the following; and referenced using the API url as seen from the last description:
       - Latest draw results.
         - API url reference suffix '/draw'
       - Previous draw results.  
