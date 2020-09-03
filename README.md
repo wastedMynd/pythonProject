@@ -9,7 +9,7 @@ Sample Python scripts for utility operation(s).
     - Scheduling downloads {facture reserved for the next millstone].
   - Lottery API: scraps the South African National lottery site:
     - Developed using Flask.
-    - Games offered by this API include but not limited to:
+    - Game Resource Info; offered by this API include but not limited to these Games:
         - Lotto
             - API url reference '/lotto'
         - Lotto Plus 1
