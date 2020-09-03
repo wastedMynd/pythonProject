@@ -4,7 +4,7 @@ import unittest
 class TestChromeDriver(unittest.TestCase):
 
     def setUp(self) -> None:
-        from Lottery.rest_flask_api.chrome_driver import ___setup_web_driver___
+        from Lottery.rest_flask_api.driver.chrome_driver import ___setup_web_driver___
         self.web_driver = ___setup_web_driver___()
 
     def test_setup_web_driver(self):
@@ -14,7 +14,7 @@ class TestChromeDriver(unittest.TestCase):
 
     def test_web_driver_get(self):
         # import the method to be tested...
-        from Lottery.rest_flask_api.chrome_driver import web_driver_get
+        from Lottery.rest_flask_api.driver.chrome_driver import web_driver_get
 
         # latest lotto draw result.
         lotto_latest_draw_result_site = "https://www.nationallottery.co.za/results/lotto"

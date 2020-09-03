@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class LotteryGames(Enum):
+class GameInfo(Enum):
     LOTTO = {
                 "game_name": "Lotto",
                 "how_to_play": {

@@ -1,11 +1,11 @@
 from flask import Flask
 from flask_restful import Api
-from Lottery.rest_flask_api.lotto import Lotto
-from Lottery.rest_flask_api.lotto_plus1 import LottoPlus1
-from Lottery.rest_flask_api.lotto_plus2 import LottoPlus2
-from Lottery.rest_flask_api.daily_lotto import DailyLotto
-from Lottery.rest_flask_api.powerball import PowerBall
-from Lottery.rest_flask_api.powerball_plus import PowerBallPlus
+from Lottery.rest_flask_api.resource.lotto import Lotto
+from Lottery.rest_flask_api.resource.lotto_plus1 import LottoPlus1
+from Lottery.rest_flask_api.resource.lotto_plus2 import LottoPlus2
+from Lottery.rest_flask_api.resource.daily_lotto import DailyLotto
+from Lottery.rest_flask_api.resource.powerball import PowerBall
+from Lottery.rest_flask_api.resource.powerball_plus import PowerBallPlus
 
 # Flask setup
 app = Flask(__name__)

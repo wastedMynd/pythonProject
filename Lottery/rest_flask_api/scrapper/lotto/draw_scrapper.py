@@ -1,10 +1,10 @@
-from Lottery.rest_flask_api.chrome_driver import web_driver_get
+from Lottery.rest_flask_api.driver.chrome_driver import web_driver_get
 import re
 
 DEBUGGING = False
 
 
-def getLatestDrawResultInfo():
+def get_draw():
     # latest lotto draw result.
     lotto_latest_draw_result_site = "https://www.nationallottery.co.za/results/lotto"
 
