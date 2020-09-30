@@ -1,8 +1,10 @@
 import os
 from Lottery.rest_flask_api.resource.game_info import GameInfo
 from time import strftime
+from Lottery.rest_flask_api.__init__ import Logging
 
 
+@Logging
 def get_draw_info_on(game_type) -> dict:
     draw_date = None
     draw_time = None
@@ -27,10 +29,25 @@ def get_draw_info_on(game_type) -> dict:
     }
 
 
-def get_storage_path(storage_file) -> str:
-    return os.path.join("/home/sizwe/PycharmProjects/pythonProject/Lottery/rest_flask_api/storage/", storage_file)
+@Logging
+def get_game_draw_url(game) -> str:
+    return f"http://localhost:5000/{game}/draw"
 
 
+@Logging
+def get_draw_props_path(file) -> str:
+    DIR = "/home/sizwe/PycharmProjects/pythonProject/Lottery/rest_flask_api/cluster/"
+    return os.path.join(DIR, file)
+
+
+@Logging
+def get_draw_cluster_connection_url(user, password, database=""):
+    CLUSTER_URL = f"mongodb+srv://{user}:{password}@nationallotteryzacluste.vffbf.mongodb.net/" + \
+                  f"{database}?retryWrites=true&w=majority"
+    return CLUSTER_URL
+
+
+@Logging
 def get_today_s_datetime_info() -> dict:
     # today_date format yyyy-mm-dd
     # today_weekday format in weekdays in this pattern "Mon,Tue,.."

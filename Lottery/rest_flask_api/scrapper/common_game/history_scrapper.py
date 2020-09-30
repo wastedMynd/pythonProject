@@ -1,9 +1,11 @@
 from Lottery.rest_flask_api.driver.chrome_driver import ChromeDriver
 import re
+from Lottery.rest_flask_api.__init__ import Logging
 
 
+@Logging
 def get_history(url) -> dict:
-    # lotto history draw result.
+    # common_game history draw result.
     lotto_history_result_site = url
 
     chrome_driver = ChromeDriver()
@@ -14,9 +16,6 @@ def get_history(url) -> dict:
     page_title = ___get_page_title___(driver)
 
     # region columns, and draw history result list scrapping.
-    #history_results = driver.find_element_by_id("lotto-results")
-    #assert history_results is not None
-
     game_table1 = driver.find_element_by_class_name("gameTable1")
     assert game_table1 is not None
 
@@ -44,10 +43,12 @@ def get_history(url) -> dict:
     return {"draw_result_title": page_title, "draw_history_result_list": draw_history_result_list}
 
 
+@Logging
 def ___get_page_title___(driver) -> str:
     return driver.title
 
 
+@Logging
 def ___get_game_columns__(table_row) -> list:
     game_column = table_row.find_element_by_class_name("col1")
     assert game_column is not None
@@ -74,6 +75,7 @@ def ___get_game_columns__(table_row) -> list:
     return [game_column, game_date_column, game_winning_numbers_column]
 
 
+@Logging
 def ___get_history_draw_entry___(table_row, columns) -> dict:
     # data_  = 'LOTTO\sDRAW\s2053\n2020-09-02\n09\n16\n21\n28\n37\n48\n+\n49'
     data = table_row.text
@@ -117,6 +119,7 @@ def ___get_history_draw_entry___(table_row, columns) -> dict:
     }
 
 
+@Logging
 def ___get_history_draw_list___(game_table1, columns) -> list:
     table_body = game_table1.find_element_by_class_name("tableBody")
     assert table_body is not None

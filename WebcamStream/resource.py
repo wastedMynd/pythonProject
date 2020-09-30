@@ -1,17 +1,9 @@
-from flask_restful import Resource
-from WebcamStream.webcam import Streamer
-
-
-class StreamResource(Resource):
-    def get(self, function):
-        if function == "capture":
-            return {
-                "request": function,
-                "response": "ok",
-                "stream": Streamer().get_captured_stream()
-            }
-        else:
-            return {
-                "request": function,
-                "response": "not supported"
-            }
+def gen(camera):
+    while True:
+        frame = camera.get_frame()
+        yield (
+                b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' +
+                frame +
+                b'\r\n'
+        )

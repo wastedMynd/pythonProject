@@ -1,9 +1,10 @@
 from Lottery.rest_flask_api.driver.chrome_driver import ChromeDriver
 import re
+from Lottery.rest_flask_api.__init__ import Logging
 
 
 def get_draw(url):
-    # latest lotto draw result.
+    # latest common_game draw result.
     lotto_latest_draw_result_site = url
 
     chrome_driver = ChromeDriver()
@@ -54,10 +55,12 @@ def get_draw(url):
     }
 
 
+@Logging
 def ___get_page_title___(driver) -> str:
     return driver.title
 
 
+@Logging
 def ___get_draw_id___(res_detail_view) -> int:
     resDetailView_title_match = \
         re.match("(\\w+\\s)+(\\d+)", res_detail_view.find_element_by_class_name("title").text)
@@ -67,6 +70,7 @@ def ___get_draw_id___(res_detail_view) -> int:
     return int(resDetailView_title_match.group(2))
 
 
+@Logging
 def ___get_draw_result_balls_and_bonus___(inner_header_block) -> tuple:
     resultBalls = inner_header_block.find_element_by_class_name("resultBalls")
     assert resultBalls.text is not None
@@ -82,6 +86,7 @@ def ___get_draw_result_balls_and_bonus___(inner_header_block) -> tuple:
     return list(draw_result_balls), int(draw_result_bonus_ball)
 
 
+@Logging
 def ___get_draw_date___(inner_header_block) -> str:
     dateWrap = inner_header_block.find_element_by_class_name("dateWrap")
     # assert dateWrap equals regex pattern "DRAW DATE: \d{4}-\d{2}-{2}"
@@ -91,6 +96,7 @@ def ___get_draw_date___(inner_header_block) -> str:
     return draw_date
 
 
+@Logging
 def ___get_result_division_list___(game_table_2) -> list:
     # region gameTable2 holds; column headers: divisions, winners and winnings
     tableHead = game_table_2.find_element_by_class_name("tableHead")
@@ -109,6 +115,7 @@ def ___get_result_division_list___(game_table_2) -> list:
     tableBody = game_table_2.find_element_by_class_name("tableBody")
     table_rows = tableBody.find_elements_by_class_name("tableRow")
 
+    @Logging
     def get_result_division(table_row_data):
         division_data = table_row_data.find_element_by_class_name("col1")
         winners_data = table_row_data.find_element_by_class_name("col2")
@@ -124,10 +131,12 @@ def ___get_result_division_list___(game_table_2) -> list:
     return [get_result_division(table_row_data) for table_row_data in table_rows]
 
 
+@Logging
 def ___get_draw_result_rollover_list___(res_more_view) -> list:
     tableBody = res_more_view.find_element_by_class_name("tableBody")
     table_rows = tableBody.find_elements_by_class_name("tableRow")
 
+    @Logging
     def get_draw_result_rollover(table_row_data):
         column = table_row_data.find_element_by_class_name("col1")
         column = str(column.text).lower().strip().replace(" ", "_")

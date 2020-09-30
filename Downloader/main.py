@@ -7,13 +7,13 @@ from Downloader.Controller.downloader import Downloader
 from Downloader.Utils import log
 from Downloader.Utils.log import Logging
 
-# region sample url links, for testing...
+# region sample latest_draw_result_url links, for testing...
 
 # link = "https://releases.ubuntu.com/18.04/ubuntu-18.04.4-desktop-amd64.iso"
 # link = "https://files03.tchspt.com/temp/MicrosoftEdgeStableSetup.msi"
 # link = "http://mirrors.evowise.com/linuxmint/debian/lmde-4-cinnamon-32bit.iso"
 
-# region sample url link; to 10MB MP4, test file
+# region sample latest_draw_result_url link; to 10MB MP4, test file
 link = "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_1280_10MG.mp4"
 
 

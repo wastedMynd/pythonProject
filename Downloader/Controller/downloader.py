@@ -77,7 +77,7 @@ class Downloader:
 
         if isThreadAllowedToDownload:
             # region send a request to download file...
-            with requests.request('GET', download_thread_info.url, headers=self.headers) as site:
+            with requests.request('GET', download_thread_info.latest_draw_result_url, headers=self.headers) as site:
 
                 isThreadAllowedToDownload = (site.status_code == 206 or site.status_code == 200)
 

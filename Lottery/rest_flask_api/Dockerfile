@@ -22,6 +22,7 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 # import all the packages required by the api from requirements.txt file.
 RUN pip --no-cache-dir install -r requirements.txt
 RUN pip install pymongo
+RUN pip install pyyaml
 
 # region expose, the api url port; 5000
 ENV CONTAINER_PORT_TO_EXPOSE=5000

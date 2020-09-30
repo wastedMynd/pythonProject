@@ -1,5 +1,6 @@
 from selenium import webdriver
 import os
+from Lottery.rest_flask_api.__init__ import Logging
 
 
 class ChromeDriver:

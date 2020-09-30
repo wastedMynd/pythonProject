@@ -20,7 +20,7 @@ def stitch_temp_files(download_threads_info):
         chunk_size = 1
         for download_thread_info in download_threads_info:
             temporal_file = download_thread_info.content_file_name
-            temporal_file_path =os.path.join(temp_folder, temporal_file)
+            temporal_file_path = os.path.join(temp_folder, temporal_file)
             if not download_thread_info.did_download:
                 continue
             try:
@@ -39,7 +39,7 @@ def stitch_temp_files(download_threads_info):
     os.rmdir(temp_folder)
 
     downloaded_file_size = os.stat(path_to_stitch).st_size
-    original_file_size = get_content_length_from_url(download_threads_info[0].url)
+    original_file_size = get_content_length_from_url(download_threads_info[0].latest_draw_result_url)
 
     is_complete_downloaded_file_stitched = downloaded_file_size >= original_file_size
 

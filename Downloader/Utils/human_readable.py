@@ -32,7 +32,7 @@ def is_url_link_valid(url):
         return is_url_link_pattern_valid
 
     try:
-        print("validating...your provided url address: {} ".format(url))
+        print("validating...your provided latest_draw_result_url address: {} ".format(url))
         with requests.get(url) as response:
             is_url_link_pattern_valid = response.status_code == (200 or 206)
 
@@ -54,7 +54,7 @@ def official_file_name(on_path):
 
 @Logging
 def get_content_file_name_and_type(on_path):
-    # if e.g url = temp/file.txt, and official_content_file_name = file.txt; after this...
+    # if e.g latest_draw_result_url = temp/file.txt, and official_content_file_name = file.txt; after this...
     official_content_file_name = official_file_name(on_path)
 
     # because I'm interested in separating the file from .txt, this does it.
