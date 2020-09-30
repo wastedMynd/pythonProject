@@ -2,9 +2,9 @@ from Lottery.rest_flask_api.driver.chrome_driver import ChromeDriver
 import re
 
 
-def get_draw():
+def get_draw(url):
     # latest lotto draw result.
-    lotto_latest_draw_result_site = "https://www.nationallottery.co.za/results/lotto"
+    lotto_latest_draw_result_site = url
 
     chrome_driver = ChromeDriver()
     driver = chrome_driver.___setup_web_driver___()
@@ -12,7 +12,6 @@ def get_draw():
 
     # assert page's title; equals "Ithuba National Lottery | Lotto Result"
     page_title = ___get_page_title___(driver)
-    assert page_title == "Ithuba National Lottery | Lotto Result"
 
     resDetailView = driver.find_element_by_class_name("resDetailView")
 
@@ -61,11 +60,11 @@ def ___get_page_title___(driver) -> str:
 
 def ___get_draw_id___(res_detail_view) -> int:
     resDetailView_title_match = \
-        re.match("LOTTO RESULTS FOR DRAW ID (\\d+)", res_detail_view.find_element_by_class_name("title").text)
+        re.match("(\\w+\\s)+(\\d+)", res_detail_view.find_element_by_class_name("title").text)
     assert resDetailView_title_match is not None
 
     # get draw id from resDetailView_title_match group 1
-    return int(resDetailView_title_match.group(1))
+    return int(resDetailView_title_match.group(2))
 
 
 def ___get_draw_result_balls_and_bonus___(inner_header_block) -> tuple:
